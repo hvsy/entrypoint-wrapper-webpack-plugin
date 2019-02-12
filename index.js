@@ -43,7 +43,7 @@ class entryWrapperWebpackPlugin {
 
         const templateContents = this.contents;
 
-        compiler.plugin("entry-option", function(context, entry) {
+        compiler.hooks.entryOption.tap('EntryWrapper', function(context, entry) {
 
             const extToJs = npath => utils.replaceExt(npath, '.js');
 
@@ -69,10 +69,12 @@ class entryWrapperWebpackPlugin {
             }
 
             if(typeof entry === "string" || Array.isArray(entry)) {
-                compiler.apply(itemToPlugin(entry, "main"));
+                // compiler.apply(itemToPlugin(entry, "main"));
+                itemToPlugin(entry, "main").apply(compiler);
             } else if(typeof entry === "object") {
                 Object.keys(entry).forEach(function(name) {
-                    compiler.apply(itemToPlugin(entry[name], name));
+                    // compiler.apply(itemToPlugin(entry[name], name));
+                    itemToPlugin(entry[name], name).apply(compiler)
                 });
             }
 
@@ -80,9 +82,9 @@ class entryWrapperWebpackPlugin {
 
         });
 
-        compiler.plugin("this-compilation", function() {
+        compiler.hooks.thisCompilation.tap("EntryWrapper", function(compilation) {
 
-            const inputFileSystem = this.inputFileSystem;
+            const inputFileSystem = compilation.inputFileSystem;
 
             const compileTemplate = originPath => {
                 const params = { origin: originPath };
