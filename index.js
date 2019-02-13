@@ -69,12 +69,12 @@ class entryWrapperWebpackPlugin {
             }
 
             if(typeof entry === "string" || Array.isArray(entry)) {
-                compiler.apply(itemToPlugin(entry, "main"));
-                // itemToPlugin(entry, "main").apply(compiler);
+                // compiler.apply(itemToPlugin(entry, "main"));
+                itemToPlugin(entry, "main").apply(compiler);
             } else if(typeof entry === "object") {
                 Object.keys(entry).forEach(function(name) {
-                    compiler.apply(itemToPlugin(entry[name], name));
-                    // itemToPlugin(entry[name], name).apply(compiler)
+                    // compiler.apply(itemToPlugin(entry[name], name));
+                    itemToPlugin(entry[name], name).apply(compiler)
                 });
             }
 
@@ -104,7 +104,6 @@ class entryWrapperWebpackPlugin {
                 });
             }
 
-            console.log(wrapperEntry);
             wrapperEntry.forEach(({source, wrapper}) => {
                 saveToVirtualFilesystem(wrapper, compileTemplate(source))
             });
