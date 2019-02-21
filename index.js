@@ -19,6 +19,7 @@ class entryWrapperWebpackPlugin {
         this.options = Object.assign({
             skipExistFiles: false,
             include: /.*/,
+            exclude : null,
             template: '',
             file: ''
         }, options);
@@ -48,6 +49,9 @@ class entryWrapperWebpackPlugin {
             const extToJs = npath => utils.replaceExt(npath, '.__wrapper__.js');
 
             function action(n){
+                if(_opt.exclude && _opt.exclude.test(n)){
+                    return n;
+                }
                 if(_opt.include.test(n)){
                     const _js = extToJs(n);
                     wrapperEntry.push({

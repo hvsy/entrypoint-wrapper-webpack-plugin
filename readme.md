@@ -72,6 +72,7 @@ module.exports = {
 |:--:|:--:|:--:|:----------|
 |`skipExistFiles`|`{Boolean}`|`false`|skip existing files|
 |`include`|`{RegExp}`|`/.*/`|included files|
+|`exclude`|`{RegExp}`|`/.*/`|excluded files|
 |`file`|`{String}`|`''`|wrapper path|
 |`template`|`{Function,String}`|`''`|wrapper template|
 
