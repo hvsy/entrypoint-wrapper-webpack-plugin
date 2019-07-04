@@ -21,7 +21,8 @@ class entryWrapperWebpackPlugin {
             include: /.*/,
             exclude : null,
             template: '',
-            file: ''
+            file: '',
+            ext : 'js'
         }, options);
     }
 
@@ -46,7 +47,7 @@ class entryWrapperWebpackPlugin {
 
         compiler.hooks.entryOption.tap('EntryWrapper', function(context, entry) {
 
-            const extToJs = npath => utils.replaceExt(npath, '.__wrapper__.js');
+            const extToJs = npath => utils.replaceExt(npath, '.__wrapper__.' + _opt.ext);
 
             function action(n){
                 if(_opt.exclude && _opt.exclude.test(n)){

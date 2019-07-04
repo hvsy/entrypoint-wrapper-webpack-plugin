@@ -75,4 +75,5 @@ module.exports = {
 |`exclude`|`{RegExp}`|`/.*/`|excluded files|
 |`file`|`{String}`|`''`|wrapper path|
 |`template`|`{Function,String}`|`''`|wrapper template|
+|`ext`|`{String}`|`js`|wrapper entry extension name
 
