@@ -49,7 +49,7 @@ class entryWrapperWebpackPlugin {
 
             const extToJs = npath => utils.replaceExt(npath, '.__wrapper__.' + _opt.ext);
 
-            function action(n){
+            function action(n,name){
                 if(_opt.exclude && _opt.exclude.test(n)){
                     return n;
                 }
@@ -57,7 +57,8 @@ class entryWrapperWebpackPlugin {
                     const _js = extToJs(n);
                     wrapperEntry.push({
                         source: n,
-                        wrapper: _js
+                        wrapper: _js,
+                        name,
                     });
                     return _js;
                 }
@@ -66,10 +67,10 @@ class entryWrapperWebpackPlugin {
 
             function itemToPlugin(item, name) {
                 if(Array.isArray(item)){
-                    item = item.map(action);
+                    item = item.map((i)=>action(i,name));
                     return new MultiEntryPlugin(context, item, name);
                 } else {
-                    return new SingleEntryPlugin(context, action(item), name);
+                    return new SingleEntryPlugin(context, action(item,name), name);
                 }
             }
 
@@ -91,8 +92,8 @@ class entryWrapperWebpackPlugin {
 
             const inputFileSystem = compilation.inputFileSystem;
 
-            const compileTemplate = originPath => {
-                const params = { origin: originPath };
+            const compileTemplate = (originPath,name) => {
+                const params = { origin: originPath ,name};
                 const contentIsFunction = typeof templateContents === 'function';
                 return contentIsFunction
                     ? templateContents(params)
@@ -109,8 +110,8 @@ class entryWrapperWebpackPlugin {
                 });
             }
 
-            wrapperEntry.forEach(({source, wrapper}) => {
-                saveToVirtualFilesystem(wrapper, compileTemplate(source))
+            wrapperEntry.forEach(({source, wrapper,name}) => {
+                saveToVirtualFilesystem(wrapper, compileTemplate(source,name))
             });
 
         });

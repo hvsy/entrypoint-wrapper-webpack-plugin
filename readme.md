@@ -58,8 +58,8 @@ module.exports = {
 	new EntryPoint({
 	  include: /.*\.vue$/,
 	  // template function
-	  template: function(params){
-	    return `import Main from '${params.origin}';Main.el = '#root';new Vue(Main)`
+	  template: function({origin,name}){
+	    return `import Main from '${origin}';Main.el = '#root';new Vue(Main)`
 	  }
 	})
   ]
