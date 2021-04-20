@@ -51,7 +51,7 @@ class entryWrapperWebpackPlugin {
 
             function action(n,name){
                 if(_opt.exclude){
-                    const excludes = typeof _opt.exclude === 'array' ? _opt.exclude : [_opt.exclude];
+                    const excludes = _opt.exclude instanceof Array ? _opt.exclude : [_opt.exclude];
                     const len = excludes.length;
                     for(let i = 0; i < len; ++i){
                         const reg = excludes[i];
