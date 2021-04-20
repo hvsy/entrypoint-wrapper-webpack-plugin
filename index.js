@@ -50,8 +50,15 @@ class entryWrapperWebpackPlugin {
             const extToJs = npath => utils.replaceExt(npath, '.__wrapper__.' + _opt.ext);
 
             function action(n,name){
-                if(_opt.exclude && _opt.exclude.test(n)){
-                    return n;
+                if(_opt.exclude){
+                    const excludes = typeof _opt.exclude === 'array' ? _opt.exclude : [_opt.exclude];
+                    const len = excludes.length;
+                    for(let i = 0; i < len; ++i){
+                        const reg = excludes[i];
+                        if(reg.test(n)){
+                            return n;
+                        }
+                    }
                 }
                 if(_opt.include.test(n)){
                     const _js = extToJs(n);
