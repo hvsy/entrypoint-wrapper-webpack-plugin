@@ -6,12 +6,11 @@
 
 const path = require('path');
 const fs = require('fs');
+const VirtualModulesPlugin = require('webpack-virtual-modules');
 
 const SingleEntryPlugin = require("webpack/lib/SingleEntryPlugin");
-const MultiEntryPlugin = require("webpack/lib/MultiEntryPlugin");
 
 const utils = require('./lib/utils');
-const virtualFilesystem = require('./lib/virtual-file-system');
 
 class entryWrapperWebpackPlugin {
 
@@ -31,7 +30,29 @@ class entryWrapperWebpackPlugin {
         const wrapperEntry = [];
         const context = compiler.context;
         const _opt = this.options;
+        const virtualModules = new VirtualModulesPlugin({
 
+        });
+        virtualModules.apply(compiler);
+        function writeEntriesFiles(){
+            const compileTemplate = (originPath,name) => {
+                const params = { origin: originPath ,name};
+                const contentIsFunction = typeof templateContents === 'function';
+                return contentIsFunction
+                    ? templateContents(params)
+                    : utils.compileTemplate(templateContents, params);
+            };
+
+            function saveToVirtualFilesystem(jsPath, contents){
+                const modulePath = path.isAbsolute(jsPath) ? jsPath : path.join(context, jsPath);
+                if(fs.existsSync(modulePath) && _opt.skipExistFiles) return;
+                virtualModules.writeModule(modulePath, contents);
+            }
+
+            wrapperEntry.forEach(({source, wrapper,name}) => {
+                saveToVirtualFilesystem(wrapper, compileTemplate(source,name))
+            });
+        }
         if(_opt.file){
             const filename = _opt.file;
             const filePath = path.isAbsolute(filename) ? filename : path.resolve(context, filename);
@@ -50,8 +71,15 @@ class entryWrapperWebpackPlugin {
             const extToJs = npath => utils.replaceExt(npath, '.__wrapper__.' + _opt.ext);
 
             function action(n,name){
-                if(_opt.exclude && _opt.exclude.test(n)){
-                    return n;
+                if(_opt.exclude){
+                    const excludes = _opt.exclude instanceof Array ? _opt.exclude : [_opt.exclude];
+                    const len = excludes.length;
+                    for(let i = 0; i < len; ++i){
+                        const reg = excludes[i];
+                        if(reg.test(n)){
+                            return n;
+                        }
+                    }
                 }
                 if(_opt.include.test(n)){
                     const _js = extToJs(n);
@@ -65,59 +93,34 @@ class entryWrapperWebpackPlugin {
                 return n;
             }
 
-            function itemToPlugin(item, name) {
+            function itemToPlugin({import : item}, name) {
                 if(Array.isArray(item)){
-                    item = item.map((i)=>action(i,name));
-                    return new MultiEntryPlugin(context, item, name);
+                    return item.map((i) => {
+                        return new SingleEntryPlugin(context, action(i,name), name);
+                    })
                 } else {
-                    return new SingleEntryPlugin(context, action(item,name), name);
+                    return [new SingleEntryPlugin(context, action(item,name), name)];
                 }
             }
 
             if(typeof entry === "string" || Array.isArray(entry)) {
-                // compiler.apply(itemToPlugin(entry, "main"));
-                itemToPlugin(entry, "main").apply(compiler);
+                itemToPlugin(entry, "main").forEach((t) => {
+                    t.apply(compiler);
+                })
             } else if(typeof entry === "object") {
                 Object.keys(entry).forEach(function(name) {
-                    // compiler.apply(itemToPlugin(entry[name], name));
-                    itemToPlugin(entry[name], name).apply(compiler)
+                    itemToPlugin(entry[name], name).forEach((t) => {
+                        t.apply(compiler)
+                    })
                 });
             }
-
+            writeEntriesFiles();
             return true;
 
         });
-
-        compiler.hooks.thisCompilation.tap("EntryWrapper", function(compilation) {
-
-            const inputFileSystem = compilation.inputFileSystem;
-
-            const compileTemplate = (originPath,name) => {
-                const params = { origin: originPath ,name};
-                const contentIsFunction = typeof templateContents === 'function';
-                return contentIsFunction
-                    ? templateContents(params)
-                    : utils.compileTemplate(templateContents, params);
-            };
-
-            function saveToVirtualFilesystem(jsPath, contents){
-                const modulePath = path.isAbsolute(jsPath) ? jsPath : path.join(context, jsPath);
-                if(fs.existsSync(modulePath) && _opt.skipExistFiles) return;
-                virtualFilesystem({
-                    fs: inputFileSystem,
-                    modulePath,
-                    contents
-                });
-            }
-
-            wrapperEntry.forEach(({source, wrapper,name}) => {
-                saveToVirtualFilesystem(wrapper, compileTemplate(source,name))
-            });
-
-        });
-
     }
 
 }
 
 module.exports = entryWrapperWebpackPlugin;
+
